@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .feedback-form {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .feedback-form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .feedback-form button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>URL Analysis</h1>
+    <form id="urlForm">
+        <label for="urlInput">Enter URL:</label>
+        <textarea id="urlInput" name="urls" rows="5" required></textarea>
+        <button type="button" onclick="analyzeUrls()">Analyze</button>
+    </form>
+
+    <div id="resultContainer" style="display:none;">
+        <h2>Results:</h2>
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Prediction</th>
+                    <th>Probability</th>
+                    <th>Explanation</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Feedback Form -->
+    <div class="feedback-form" id="feedbackForm" style="display:none;">
+        <h2>Provide Feedback</h2>
+        <button type="button" onclick="submitFeedback('correct')">Correct</button>
+        <button type="button" onclick="submitFeedback('incorrect')">Incorrect</button>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        function analyzeUrls() {
+            var urls = $('#urlInput').val().split(/[\n,]+/); // Get the URLs and split by newlines or commas
+
+            // Clear previous results
+            $('#resultsBody').empty();
+
+            // AJAX POST request to send the URLs data to the backend
+            $.ajax({
+                type: 'POST',
+                url: '/api/analyze',
+                data: {urls: urls},
+                traditional: true, // Required for sending arrays/objects as data
+                success: function(response) {
+                    console.log(response); // Log the response to the console for debugging
+
+                    // Display results in the table
+                    $.each(response.results, function(index, result) {
+                        var row = '<tr>' +
+                                  '<td>' + result.url + '</td>' +
+                                  '<td>' + result.prediction + '</td>' +
+                                  '<td>' + result.probability + '</td>' +
+                                  '<td>' + result.explanation + '</td>' +
+                                  '</tr>';
+                        $('#resultsBody').append(row);
+                    });
+
+                    // Show the result container
+                    $('#resultContainer').show();
+
+                    // Show the feedback form
+                    $('#feedbackForm').show();
+                },
+                error: function(error) {
+                    console.error('Error:', error); // Log any errors to the console
+                }
+            });
+        }
+
+        function submitFeedback(type) {
+            var urls = $('#urlInput').val().split(/[\n,]+/); // Get the URLs and split by newlines or commas
+
+            // AJAX POST request to submit feedback
+            $.ajax({
+                type: 'POST',
+                url: '/api/analyze',
+                data: { urls: urls, feedback: type },
+                traditional: true, // Required for sending arrays/objects as data
+                success: function(response) {
+                    console.log(response); // Log the response to the console for debugging
+                    alert('Feedback submitted successfully!');
+                    // Optionally redirect to another page after successful submission
+                    // window.location.href = '/thank_you';
+                },
+                error: function(error) {
+                    console.error('Error:', error); // Log any errors to the console
+                    alert('Failed to submit feedback. Please try again.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
